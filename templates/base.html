@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ 'now'|timestamp }}">
     {% block head %}{% endblock %}
 </head>
-<body>
+<body {% if current_user.is_authenticated %}data-user-id="{{ current_user.id }}"{% endif %}>
     {% block content %}{% endblock %}
     <footer>
         <div class="menu">
