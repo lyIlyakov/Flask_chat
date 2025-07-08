@@ -25,7 +25,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         const messageDiv = document.createElement('div');
-        const isSent = data.sender_id === {{ current_user.id }};
+        // Get current user ID from a data attribute or global variable
+        const currentUserId = document.body.getAttribute('data-user-id') || window.currentUserId;
+        const isSent = data.sender_id == currentUserId;
         messageDiv.className = 'message ' + (isSent ? 'sent' : 'received');
         messageDiv.setAttribute('data-message-id', data.message_id || 'new-' + Date.now());
         messageDiv.innerHTML = `<strong>${data.sender}</strong>: ${data.message} <br><small>${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} <span class="status">✓✓</span></small>`;
@@ -58,8 +60,12 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Форма #chat-form найдена, установка обработчика');
         chatForm.addEventListener('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
-            console.log('Обработчик submit вызван');
+            console.log('Обработчик submit вызван, форма отправки предотвращена');
             const messageInput = document.getElementById('message-input');
+            if (!messageInput) {
+                console.error('Поле ввода #message-input не найдено');
+                return false;
+            }
             const message = messageInput.value.trim();
             const conversationId = window.location.pathname.split('/').pop();
             if (message && conversationId) {
@@ -73,7 +79,19 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 console.error('Ошибка: сообщение или conversationId пусты', { message, conversationId });
             }
+            return false; // Additional safety to prevent form submission
         });
+
+        // Add Enter key handler for message input
+        const messageInput = document.getElementById('message-input');
+        if (messageInput) {
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    chatForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        }
     } else {
         console.error('Элемент #chat-form не найден в DOM');
     }

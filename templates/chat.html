@@ -31,8 +31,8 @@
             </div>
         {% endfor %}
     </div>
-    <form id="chat-form" action="">
-        <input type="text" id="message-input" placeholder="Введите сообщение..." autocomplete="off">
+    <form id="chat-form" action="" onsubmit="return false;">
+        <input type="text" id="message-input" placeholder="Введите сообщение..." autocomplete="off" required>
         <input type="submit" value="Отправить">
     </form>
 {% endblock %}
