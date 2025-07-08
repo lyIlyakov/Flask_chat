@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список чатов</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <h1>Список чатов</h1>
+    <ul id="chat-list">
+        {% for conversation in conversations %}
+            <li>
+                <img src="/static/images/placeholder.png" alt="Иконка">
+                {% if conversation.type == 'direct' %}
+                    {% set other = conversation.user1 if conversation.user1 != current_user else conversation.user2 %}
+                    <a href="{{ url_for('chat', conversation_id=conversation.id) }}">@{{ other.username }}</a>
+                {% else %}
+                    <a href="{{ url_for('chat', conversation_id=conversation.id) }}">{{ conversation.name }}</a>
+                {% endif %}
+                <span>
+                    {% if conversation.messages.count() > 0 %}
+                        {{ conversation.messages.order_by(Message.timestamp.desc()).first().text[:50] + '...' if conversation.messages.order_by(Message.timestamp.desc()).first().text|length > 50 else conversation.messages.order_by(Message.timestamp.desc()).first().text }}
+                    {% else %}
+                        Нет сообщений
+                    {% endif %}
+                </span>
+            </li>
+        {% endfor %}
+    </ul>
+    <footer>
+        <div class="menu">
+            <a href="#">Настройки</a>
+            <a href="{{ url_for('create_group') }}">Создать группу</a>
+            <a href="{{ url_for('logout') }}">Выйти</a>
+        </div>
+        <div class="center">chater</div>
+    </footer>
+    <a href="{{ url_for('start_chat') }}" id="add-contact">+</a>
+</body>
+</html>

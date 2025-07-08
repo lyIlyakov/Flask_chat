@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block title %}Начать чат{% endblock %}
+{% block head %}
+    <script
+  src="https://code.jquery.com/jquery-3.7.1.js"
+  integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+  crossorigin="anonymous"></script>
+{% endblock %}
+{% block content %}
+    <h1>Начать новый чат</h1>
+    <div id="start-chat">
+        <h2>Выберите пользователя</h2>
+        <ul>
+            {% for user in users %}
+                <li>
+                    <a href="{{ url_for('chat_with', user_id=user.id) }}">
+                        {% if user.avatar %}
+                            <img src="{{ url_for('static', filename='avatars/' + user.avatar) }}" alt="{{ user.username }} avatar" width="30" height="30">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='avatars/default.png') }}" alt="Default avatar" width="30" height="30">
+                        {% endif %}
+                        @{{ user.username }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

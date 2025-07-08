@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block title %}
+    {% if conversation.type == 'direct' %}
+        Чат с @{{ conversation.user1.username if conversation.user1 != current_user else conversation.user2.username }}
+    {% else %}
+        {{ conversation.name }}
+    {% endif %}
+{% endblock %}
+{% block head %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}?v={{ 'now'|timestamp }}"></script>
+{% endblock %}
+{% block content %}
+    <h1>
+        {% if conversation.type == 'direct' %}
+            Чат с @{{ conversation.user1.username if conversation.user1 != current_user else conversation.user2.username }}
+        {% else %}
+            {{ conversation.name }}
+            {% if conversation.creator == current_user %}
+                <a href="{{ url_for('add_members', group_id=conversation.id) }}">Добавить участников</a>
+            {% endif %}
+        {% endif %}
+    </h1>
+    <div id="messages">
+        {% for message in messages %}
+            <div class="message {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}" data-message-id="{{ message.id }}">
+                <strong>{{ message.sender.username }}</strong>: {{ message.text }} <br>
+                <small>{{ message.timestamp.strftime('%H:%M') }} <span class="status">✓✓</span></small>
+            </div>
+        {% endfor %}
+    </div>
+    <form id="chat-form" action="">
+        <input type="text" id="message-input" placeholder="Введите сообщение..." autocomplete="off">
+        <input type="submit" value="Отправить">
+    </form>
+{% endblock %}

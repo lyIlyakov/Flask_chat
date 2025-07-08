@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block title %}Настройки{% endblock %}
+{% block head %}
+    <script
+  src="https://code.jquery.com/jquery-3.7.1.js"
+  integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+  crossorigin="anonymous"></script>
+{% endblock %}
+{% block content %}
+    <h1>Настройки</h1>
+    <div id="settings">
+        <h2>Изменить профиль</h2>
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('settings') }}">
+            {{ form.hidden_tag() }}
+            <div>
+                {{ form.username.label }}<br>
+                {{ form.username(size=20, value=current_user.username) }}
+                {% for error in form.username.errors %}
+                    <span style="color: red;">{{ error }}</span><br>
+                {% endfor %}
+            </div>
+            <div>
+                {{ form.avatar.label }}<br>
+                {{ form.avatar() }}
+                {% for error in form.avatar.errors %}
+                    <span style="color: red;">{{ error }}</span><br>
+                {% endfor %}
+            </div>
+            {% if current_user.avatar %}
+                <div>
+                    <img src="{{ url_for('static', filename='avatars/' + current_user.avatar) }}" alt="Current avatar" width="100" height="100">
+                </div>
+            {% endif %}
+            <div>
+                {{ form.submit() }}
+            </div>
+        </form>
+    </div>
+{% endblock %}
