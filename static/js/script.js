@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         const messageDiv = document.createElement('div');
-        const isSent = data.sender_id === {{ current_user.id }};
+        const currentUserId = parseInt(document.body.getAttribute('data-user-id'));
+        const isSent = currentUserId && data.sender_id === currentUserId;
         messageDiv.className = 'message ' + (isSent ? 'sent' : 'received');
         messageDiv.setAttribute('data-message-id', data.message_id || 'new-' + Date.now());
         messageDiv.innerHTML = `<strong>${data.sender}</strong>: ${data.message} <br><small>${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} <span class="status">✓✓</span></small>`;
