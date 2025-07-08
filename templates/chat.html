@@ -10,6 +10,11 @@
 {% block head %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <script>
+        // Передаем ID текущего пользователя в глобальную переменную, чтобы к ней мог обратиться статический script.js
+        // @ts-ignore
+        window.currentUserId = {{ current_user.id }};
+    </script>
     <script src="{{ url_for('static', filename='js/script.js') }}?v={{ 'now'|timestamp }}"></script>
 {% endblock %}
 {% block content %}
