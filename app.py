@@ -24,9 +24,13 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 socketio = SocketIO(app, manage_session=False, cors_allowed_origins="*")
 
+
 def timestamp_filter(value):
     return str(int(datetime.now().timestamp()))
+
+
 app.jinja_env.filters['timestamp'] = timestamp_filter
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -67,6 +71,7 @@ class User(UserMixin, db.Model):
             logger.error(f"Ошибка в get_conversations для пользователя {self.username}: {str(e)}")
             return []  # Возвращаем пустой список в случае ошибки
 
+
 class Conversation(db.Model):
     __tablename__ = 'conversations'
     id = db.Column(db.Integer, primary_key=True)
@@ -78,6 +83,7 @@ class Conversation(db.Model):
     }
     messages = db.relationship('Message', backref='conversation', lazy='dynamic')
 
+
 class DirectMessage(Conversation):
     __tablename__ = 'direct_messages'
     id = db.Column(db.Integer, db.ForeignKey('conversations.id'), primary_key=True)
@@ -86,6 +92,7 @@ class DirectMessage(Conversation):
     __mapper_args__ = {
         'polymorphic_identity': 'direct'
     }
+
 
 class Group(Conversation):
     __tablename__ = 'groups'
@@ -97,10 +104,12 @@ class Group(Conversation):
     }
     creator = db.relationship('User', backref='created_groups')
 
+
 group_members = db.Table('group_members',
-    db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key=True),
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
-)
+                         db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key=True),
+                         db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
+                         )
+
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -109,35 +118,42 @@ class Message(db.Model):
     text = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
+
 class LoginForm(FlaskForm):
     username = StringField('Имя пользователя', validators=[DataRequired(), Length(min=3, max=80)])
     password = PasswordField('Пароль', validators=[DataRequired(), Length(min=6)])
     submit = SubmitField('Войти')
+
 
 class RegisterForm(FlaskForm):
     username = StringField('Имя пользователя', validators=[DataRequired(), Length(min=3, max=80)])
     password = PasswordField('Пароль', validators=[DataRequired(), Length(min=6)])
     submit = SubmitField('Зарегистрироваться')
 
+
 class CreateGroupForm(FlaskForm):
     name = StringField('Название группы', validators=[DataRequired(), Length(min=3, max=100)])
     members = SelectMultipleField('Участники', coerce=str, validators=[DataRequired()])
     submit = SubmitField('Создать')
+
 
 class SettingsForm(FlaskForm):
     username = StringField('Имя пользователя', validators=[DataRequired(), Length(min=3, max=80)])
     avatar = FileField('Аватарка', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Только изображения!')])
     submit = SubmitField('Сохранить')
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
+
 
 @app.route('/')
 def index():
     if current_user.is_authenticated:
         return redirect(url_for('chats'))
     return redirect(url_for('login'))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -155,6 +171,7 @@ def login():
         logger.warning(f'Неуспешная попытка входа для {username}')
         return jsonify({'error': 'Неверные учетные данные'}), 401
     return render_template('login.html', form=form)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -176,6 +193,7 @@ def register():
         return redirect(url_for('chats'))
     return render_template('register.html', form=form)
 
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -183,14 +201,11 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+
 @app.route('/chats')
 @login_required
 def chats():
-    conversations = current_user.get_conversations()
-    if conversations is None:
-        logger.warning(f"get_conversations вернул None для пользователя {current_user.username}")
-        conversations = []
-    logger.info(f'Пользователь {current_user.username} открыл список чатов с {len(conversations)} беседами')
+    conversations = Conversation.query.filter_by(user_id=current_user.id).all()
     return render_template('chats.html', conversations=conversations)
 
 
@@ -210,12 +225,14 @@ def chat(conversation_id):
     logger.info(f'Пользователь {current_user.username} открыл чат {conversation_id} с {len(messages)} сообщениями')
     return render_template('chat.html', conversation=conversation, messages=messages)
 
+
 @app.route('/start_chat')
 @login_required
 def start_chat():
     users = User.query.filter(User.id != current_user.id).all()
     logger.info(f'Пользователь {current_user.username} открыл страницу начала чата')
     return render_template('start_chat.html', users=users)
+
 
 @app.route('/chat_with/<int:user_id>')
 @login_required
@@ -231,6 +248,7 @@ def chat_with(user_id):
         logger.info(f'Создана новая беседа между {current_user.username} и {other.username}')
     logger.info(f'Пользователь {current_user.username} начал чат с {other.username}')
     return redirect(url_for('chat', conversation_id=direct.id))
+
 
 @app.route('/create_group', methods=['GET', 'POST'])
 @login_required
@@ -255,6 +273,7 @@ def create_group():
     form.members.choices = [(str(u.id), u.username) for u in users]
     return render_template('create_group.html', form=form)
 
+
 @app.route('/group/<int:group_id>/add_members', methods=['GET', 'POST'])
 @login_required
 def add_members(group_id):
@@ -276,6 +295,7 @@ def add_members(group_id):
     users = User.query.filter(~User.id.in_(existing)).all()
     form.members.choices = [(str(u.id), u.username) for u in users]
     return render_template('add_members.html', group=group, form=form)
+
 
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -300,16 +320,19 @@ def settings():
         return redirect(url_for('chats'))
     return render_template('settings.html', form=form)
 
+
 @socketio.on('connect')
 def handle_connect(auth=None):
     if current_user.is_authenticated:
         conversations = current_user.get_conversations()
         for conversation, _ in conversations:
             join_room(str(conversation.id))
-        logger.info(f'Пользователь {current_user.username} подключился к WebSocket и присоединился к {len(conversations)} комнатам')
+        logger.info(
+            f'Пользователь {current_user.username} подключился к WebSocket и присоединился к {len(conversations)} комнатам')
     else:
         logger.warning('Неавторизованный пользователь пытался подключиться к WebSocket')
         disconnect()
+
 
 @socketio.on('join')
 def on_join(data):
@@ -334,6 +357,7 @@ def on_join(data):
             return
     join_room(conversation_id)
     logger.info(f'Пользователь {current_user.username} присоединился к комнате {conversation_id}')
+
 
 @socketio.on('send_message')
 def handle_send_message(data):
@@ -363,7 +387,8 @@ def handle_send_message(data):
     db.session.commit()
     conversation.last_message_timestamp = message.timestamp
     db.session.commit()
-    logger.info(f'Сообщение сохранено в базе: id={message.id}, conversation_id={conversation_id}, sender={current_user.username}, text={message_text}')
+    logger.info(
+        f'Сообщение сохранено в базе: id={message.id}, conversation_id={conversation_id}, sender={current_user.username}, text={message_text}')
     socketio.emit('new_message', {
         'sender': current_user.username,
         'sender_id': current_user.id,
@@ -373,6 +398,7 @@ def handle_send_message(data):
         'message_id': message.id
     }, room=conversation_id)
     logger.info(f'Сообщение отправлено в комнату {conversation_id}: {message_text}')
+
 
 with app.app_context():
     db.create_all()
