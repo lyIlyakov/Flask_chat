@@ -45,11 +45,27 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def get_conversations(self):
-        direct = DirectMessage.query.filter((DirectMessage.user1_id == self.id) | (DirectMessage.user2_id == self.id)).all()
-        group = self.groups
-        conversations = direct + list(group)
-        conversations.sort(key=lambda c: c.last_message_timestamp or datetime.min, reverse=True)
-        return conversations
+        try:
+            # Получаем личные сообщения
+            direct = DirectMessage.query.filter(
+                (DirectMessage.user1_id == self.id) | (DirectMessage.user2_id == self.id)
+            ).all()
+            # Получаем группы
+            group = self.groups
+            # Объединяем беседы
+            conversations = direct + list(group)
+            # Подготавливаем список кортежей (conversation, last_message)
+            result = []
+            for conv in conversations:
+                last_message = conv.messages.order_by(Message.timestamp.desc()).first()
+                result.append((conv, last_message))
+            # Сортируем по времени последнего сообщения
+            result.sort(key=lambda x: x[1].timestamp if x[1] else datetime.min, reverse=True)
+            logger.debug(f"Пользователь {self.username} получил {len(result)} бесед")
+            return result
+        except Exception as e:
+            logger.error(f"Ошибка в get_conversations для пользователя {self.username}: {str(e)}")
+            return []  # Возвращаем пустой список в случае ошибки
 
 class Conversation(db.Model):
     __tablename__ = 'conversations'
@@ -171,8 +187,12 @@ def logout():
 @login_required
 def chats():
     conversations = current_user.get_conversations()
-    logger.info(f'Пользователь {current_user.username} открыл список чатов')
+    if conversations is None:
+        logger.warning(f"get_conversations вернул None для пользователя {current_user.username}")
+        conversations = []
+    logger.info(f'Пользователь {current_user.username} открыл список чатов с {len(conversations)} беседами')
     return render_template('chats.html', conversations=conversations)
+
 
 @app.route('/chat/<int:conversation_id>')
 @login_required
@@ -281,10 +301,10 @@ def settings():
     return render_template('settings.html', form=form)
 
 @socketio.on('connect')
-def handle_connect():
+def handle_connect(auth=None):
     if current_user.is_authenticated:
         conversations = current_user.get_conversations()
-        for conversation in conversations:
+        for conversation, _ in conversations:
             join_room(str(conversation.id))
         logger.info(f'Пользователь {current_user.username} подключился к WebSocket и присоединился к {len(conversations)} комнатам')
     else:

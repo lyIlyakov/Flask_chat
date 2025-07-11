@@ -4,38 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Список чатов</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+<header>
     <h1>Список чатов</h1>
-    <ul id="chat-list">
-        {% for conversation in conversations %}
-            <li>
-                <img src="/static/images/placeholder.png" alt="Иконка">
+</header>
+<main>
+    <div class="chat-list">
+        <a href="{{ url_for('chat', conversation_id=conversation.id) }}" class="chat-item">
+            <div>
                 {% if conversation.type == 'direct' %}
-                    {% set other = conversation.user1 if conversation.user1 != current_user else conversation.user2 %}
-                    <a href="{{ url_for('chat', conversation_id=conversation.id) }}">@{{ other.username }}</a>
+                {% set other = conversation.user1 if conversation.user1 != current_user else conversation.user2 %}
+                <h3>@{ other.username }}</h3>
                 {% else %}
-                    <a href="{{ url_for('chat', conversation_id=conversation.id) }}">{{ conversation.name }}</a>
+                <h3>{{ conversation.name }}</h3>
                 {% endif %}
-                <span>
-                    {% if conversation.messages.count() > 0 %}
-                        {{ conversation.messages.order_by(Message.timestamp.desc()).first().text[:50] + '...' if conversation.messages.order_by(Message.timestamp.desc()).first().text|length > 50 else conversation.messages.order_by(Message.timestamp.desc()).first().text }}
-                    {% else %}
-                        Нет сообщений
-                    {% endif %}
-                </span>
-            </li>
+                {% if last_message %}
+                <p>{{ last_message.text[:50] + '...' if last_message.text|length > 50 else last_message.text }}</p>
+                {% else %}
+                <p>Нет сообщений</p>
+                {% endif %}
+            </div>
+        </a>
         {% endfor %}
-    </ul>
-    <footer>
-        <div class="menu">
-            <a href="#">Настройки</a>
-            <a href="{{ url_for('create_group') }}">Создать группу</a>
-            <a href="{{ url_for('logout') }}">Выйти</a>
-        </div>
-        <div class="center">chater</div>
-    </footer>
-    <a href="{{ url_for('start_chat') }}" id="add-contact">+</a>
+        {% else %}
+        <p>У вас пока нет чатов. <a href="{{ url_for('start_chat') }}">Начните новый чат</a> или <a
+                href="{{ url_for('create_group') }}">создайте группу</a>.</p>
+        {% endif %}
+    </div>
+    <div class="sidebar">
+        <a href="{{ url_for('settings') }}">Настройки</a>
+        <a href="{{ url_for('create_group') }}">Создать группу</a>
+        <a href="{{ url_for('start_chat') }}">Начать чат</a>
+        <a href="{{ url_for('logout') }}">Выйти</a>
+    </div>
+</main>
+<footer>
+    <p>chater</p>
+</footer>
+<a href="{{ url_for('start_chat') }}" class="fab">+</a>
 </body>
 </html>
