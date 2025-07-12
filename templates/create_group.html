@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 {% extends "base.html" %}
 {% block title %}Создать группу{% endblock %}
 {% block head %}
@@ -9,6 +8,7 @@
     <div id="create-group">
         <h2>Новая группа</h2>
         <form method="POST" action="{{ url_for('create_group') }}">
+            {{ form.hidden_tag() }}
             <input type="text" name="name" placeholder="Название группы" required>
             <h3>Выберите участников</h3>
             {% for user in users %}

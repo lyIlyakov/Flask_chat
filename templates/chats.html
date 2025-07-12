@@ -12,11 +12,13 @@
 </header>
 <main>
     <div class="chat-list">
+        {% if conversations %}
+        {% for conversation, last_message in conversations %}
         <a href="{{ url_for('chat', conversation_id=conversation.id) }}" class="chat-item">
             <div>
                 {% if conversation.type == 'direct' %}
                 {% set other = conversation.user1 if conversation.user1 != current_user else conversation.user2 %}
-                <h3>@{ other.username }}</h3>
+                <h3>@{{ other.username }}</h3>
                 {% else %}
                 <h3>{{ conversation.name }}</h3>
                 {% endif %}
