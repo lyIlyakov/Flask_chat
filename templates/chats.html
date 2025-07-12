@@ -12,24 +12,26 @@
 </header>
 <main>
     <div class="chat-list">
-        <a href="{{ url_for('chat', conversation_id=conversation.id) }}" class="chat-item">
-            <div>
-                {% if conversation.type == 'direct' %}
-                {% set other = conversation.user1 if conversation.user1 != current_user else conversation.user2 %}
-                <h3>@{ other.username }}</h3>
-                {% else %}
-                <h3>{{ conversation.name }}</h3>
-                {% endif %}
-                {% if last_message %}
-                <p>{{ last_message.text[:50] + '...' if last_message.text|length > 50 else last_message.text }}</p>
-                {% else %}
-                <p>Нет сообщений</p>
-                {% endif %}
-            </div>
-        </a>
-        {% endfor %}
+        {% if conversations %}
+            {% for conversation, last_message in conversations %}
+                <a href="{{ url_for('chat', conversation_id=conversation.id) }}" class="chat-item">
+                    <div>
+                        {% if conversation.type == 'direct' %}
+                            {% set other = conversation.user1 if conversation.user1 != current_user else conversation.user2 %}
+                            <h3>@{{ other.username }}</h3>
+                        {% else %}
+                            <h3>{{ conversation.name }}</h3>
+                        {% endif %}
+                        {% if last_message %}
+                            <p>{{ last_message.text[:50] + '...' if last_message.text|length > 50 else last_message.text }}</p>
+                        {% else %}
+                            <p>Нет сообщений</p>
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
         {% else %}
-        <p>У вас пока нет чатов. <a href="{{ url_for('start_chat') }}">Начните новый чат</a> или <a
+            <p>У вас пока нет чатов. <a href="{{ url_for('start_chat') }}">Начните новый чат</a> или <a
                 href="{{ url_for('create_group') }}">создайте группу</a>.</p>
         {% endif %}
     </div>

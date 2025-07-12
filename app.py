@@ -205,7 +205,7 @@ def logout():
 @app.route('/chats')
 @login_required
 def chats():
-    conversations = Conversation.query.filter_by(user_id=current_user.id).all()
+    conversations = current_user.get_conversations()
     return render_template('chats.html', conversations=conversations)
 
 
