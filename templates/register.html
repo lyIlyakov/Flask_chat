@@ -7,7 +7,7 @@
   crossorigin="anonymous"></script>
 {% endblock %}
 {% block content %}
-    <h1>Регистрация</h1>
+    <div class="form-title">Регистрация</div>
     <form method="POST" action="{{ url_for('register') }}">
         {{ form.hidden_tag() }}
         <div>
@@ -28,5 +28,7 @@
             {{ form.submit() }}
         </div>
     </form>
-    <p>Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
+    <div class="form-footer">
+        <p>Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
+    </div>
 {% endblock %}

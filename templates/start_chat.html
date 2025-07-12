@@ -7,22 +7,97 @@
   crossorigin="anonymous"></script>
 {% endblock %}
 {% block content %}
-    <h1>Начать новый чат</h1>
-    <div id="start-chat">
-        <h2>Выберите пользователя</h2>
-        <ul>
-            {% for user in users %}
-                <li>
-                    <a href="{{ url_for('chat_with', user_id=user.id) }}">
-                        {% if user.avatar %}
-                            <img src="{{ url_for('static', filename='avatars/' + user.avatar) }}" alt="{{ user.username }} avatar" width="30" height="30">
-                        {% else %}
-                            <img src="{{ url_for('static', filename='avatars/default.png') }}" alt="Default avatar" width="30" height="30">
-                        {% endif %}
-                        @{{ user.username }}
-                    </a>
-                </li>
-            {% endfor %}
-        </ul>
+    <header>
+        <div class="logo">
+            <a href="{{ url_for('chats') }}">chater</a>
+        </div>
+        <div class="menu">
+            <a href="{{ url_for('settings') }}">Настройки</a>
+            <a href="{{ url_for('create_group') }}">Создать группу</a>
+            <a href="{{ url_for('logout') }}">Выход</a>
+        </div>
+    </header>
+    
+    <div class="search-container">
+        <h1 style="text-align: center; margin-bottom: 30px;">Найти пользователя</h1>
+        <input type="text" id="search-input" class="search-box" placeholder="Введите имя пользователя для поиска...">
+        <div id="search-results" class="search-results" style="display: none;"></div>
+        <div id="no-results" style="display: none; text-align: center; padding: 20px; color: #666;">
+            <p>Пользователь не найден</p>
+        </div>
     </div>
+    
+    <script>
+    let searchTimeout;
+    
+    document.getElementById('search-input').addEventListener('input', function() {
+        const query = this.value.trim();
+        const resultsDiv = document.getElementById('search-results');
+        const noResultsDiv = document.getElementById('no-results');
+        
+        // Очищаем предыдущий таймер
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            resultsDiv.style.display = 'none';
+            noResultsDiv.style.display = 'none';
+            return;
+        }
+        
+        // Добавляем задержку для уменьшения количества запросов
+        searchTimeout = setTimeout(() => {
+            fetch(`/search_users?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    resultsDiv.innerHTML = '';
+                    noResultsDiv.style.display = 'none';
+                    
+                    if (data.users && data.users.length > 0) {
+                        resultsDiv.style.display = 'block';
+                        data.users.forEach(user => {
+                            const userDiv = document.createElement('div');
+                            userDiv.className = 'user-item';
+                            userDiv.onclick = () => {
+                                if (confirm(`Начать чат с пользователем ${user.username}?`)) {
+                                    window.location.href = `/chat_with/${user.id}`;
+                                }
+                            };
+                            
+                            const avatarImg = document.createElement('img');
+                            avatarImg.className = 'user-avatar';
+                            avatarImg.src = user.avatar ? `/static/avatars/${user.avatar}` : '/static/orig.jpg';
+                            avatarImg.alt = `${user.username} avatar`;
+                            
+                            const userInfo = document.createElement('div');
+                            userInfo.className = 'user-info';
+                            
+                            const userName = document.createElement('div');
+                            userName.className = 'user-name';
+                            userName.textContent = user.username;
+                            
+                            const userUsername = document.createElement('div');
+                            userUsername.className = 'user-username';
+                            userUsername.textContent = `@${user.username}`;
+                            
+                            userInfo.appendChild(userName);
+                            userInfo.appendChild(userUsername);
+                            
+                            userDiv.appendChild(avatarImg);
+                            userDiv.appendChild(userInfo);
+                            
+                            resultsDiv.appendChild(userDiv);
+                        });
+                    } else {
+                        resultsDiv.style.display = 'none';
+                        noResultsDiv.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка поиска:', error);
+                    resultsDiv.style.display = 'none';
+                    noResultsDiv.style.display = 'block';
+                });
+        }, 300);
+    });
+    </script>
 {% endblock %}

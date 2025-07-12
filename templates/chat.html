@@ -17,26 +17,63 @@
 {% endblock %}
 
 {% block content %}
-    <h1>
+    <header>
+        <div class="logo">
+            <a href="{{ url_for('chats') }}">chater</a>
+        </div>
+        <div class="menu">
+            <a href="{{ url_for('settings') }}">Настройки</a>
+            <a href="{{ url_for('create_group') }}">Создать группу</a>
+            <a href="{{ url_for('logout') }}">Выход</a>
+        </div>
+    </header>
+    
+    <div class="chat-header">
         {% if conversation.type == 'direct' %}
-            Чат с @{{ conversation.user1.username if conversation.user1 != current_user else conversation.user2.username }}
+            {% set other = conversation.user1 if conversation.user1 != current_user else conversation.user2 %}
+            {% if other.avatar %}
+                <img src="{{ url_for('static', filename='avatars/' + other.avatar) }}" alt="{{ other.username }} avatar" class="chat-header-avatar">
+            {% else %}
+                <img src="{{ url_for('static', filename='orig.jpg') }}" alt="Default avatar" class="chat-header-avatar">
+            {% endif %}
+            <div class="chat-header-info">
+                <div class="chat-header-name">{{ other.username }}</div>
+            </div>
         {% else %}
-            {{ conversation.name }}
+            <img src="{{ url_for('static', filename='orig.jpg') }}" alt="Group avatar" class="chat-header-avatar">
+            <div class="chat-header-info">
+                <div class="chat-header-name">{{ conversation.name }}</div>
+            </div>
             {% if conversation.creator == current_user %}
-                <a href="{{ url_for('add_members', group_id=conversation.id) }}">Добавить участников</a>
+                <a href="{{ url_for('add_members', group_id=conversation.id) }}" style="margin-left: auto; color: #007bff; text-decoration: none;">Добавить участников</a>
             {% endif %}
         {% endif %}
-    </h1>
+    </div>
+    
     <div id="messages">
         {% for message in messages %}
             <div class="message {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}" data-message-id="{{ message.id }}">
                 <strong>{{ message.sender.username }}</strong>: {{ message.text }} <br>
-                <small>{{ message.timestamp.strftime('%H:%M') }} <span class="status">✓✓</span></small>
+                <small data-timestamp="{{ message.timestamp.timestamp() }}">{{ message.timestamp.strftime('%H:%M') }} <span class="status">✓✓</span></small>
             </div>
         {% endfor %}
     </div>
+    
     <form id="chat-form" onsubmit="return false;">
         <input type="text" id="message-input" placeholder="Введите сообщение..." autocomplete="off" required>
-        <input type="submit" value="Отправить">
+        <button type="submit" class="send-button">➤</button>
     </form>
+    
+    <script>
+    // Обновляем время сообщений для локального часового пояса
+    document.addEventListener('DOMContentLoaded', function() {
+        const timeElements = document.querySelectorAll('small[data-timestamp]');
+        timeElements.forEach(element => {
+            const timestamp = parseFloat(element.getAttribute('data-timestamp'));
+            const date = new Date(timestamp * 1000);
+            const timeString = date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+            element.innerHTML = timeString + ' <span class="status">✓✓</span>';
+        });
+    });
+    </script>
 {% endblock %}

@@ -229,9 +229,33 @@ def chat(conversation_id):
 @app.route('/start_chat')
 @login_required
 def start_chat():
-    users = User.query.filter(User.id != current_user.id).all()
-    logger.info(f'Пользователь {current_user.username} открыл страницу начала чата')
-    return render_template('start_chat.html', users=users)
+    logger.info(f'Пользователь {current_user.username} открыл страницу поиска пользователей')
+    return render_template('start_chat.html')
+
+
+@app.route('/search_users')
+@login_required
+def search_users():
+    query = request.args.get('q', '').strip()
+    if len(query) < 2:
+        return jsonify({'users': []})
+    
+    # Поиск пользователей по имени (исключая текущего пользователя)
+    users = User.query.filter(
+        User.username.ilike(f'%{query}%'),
+        User.id != current_user.id
+    ).limit(10).all()
+    
+    users_data = []
+    for user in users:
+        users_data.append({
+            'id': user.id,
+            'username': user.username,
+            'avatar': user.avatar
+        })
+    
+    logger.info(f'Пользователь {current_user.username} искал "{query}", найдено {len(users_data)} пользователей')
+    return jsonify({'users': users_data})
 
 
 @app.route('/chat_with/<int:user_id>')

@@ -8,43 +8,89 @@
 </head>
 <body>
 <header>
-    <h1>Список чатов</h1>
+    <div class="logo">
+        <a href="{{ url_for('chats') }}">chater</a>
+    </div>
+    <div class="menu">
+        <a href="{{ url_for('settings') }}">Настройки</a>
+        <a href="{{ url_for('create_group') }}">Создать группу</a>
+        <a href="{{ url_for('logout') }}">Выход</a>
+    </div>
 </header>
 <main>
     <div class="chat-list">
         {% if conversations %}
-        {% for conversation, last_message in conversations %}
-        <a href="{{ url_for('chat', conversation_id=conversation.id) }}" class="chat-item">
-            <div>
-                {% if conversation.type == 'direct' %}
-                {% set other = conversation.user1 if conversation.user1 != current_user else conversation.user2 %}
-                <h3>@{{ other.username }}</h3>
-                {% else %}
-                <h3>{{ conversation.name }}</h3>
-                {% endif %}
-                {% if last_message %}
-                <p>{{ last_message.text[:50] + '...' if last_message.text|length > 50 else last_message.text }}</p>
-                {% else %}
-                <p>Нет сообщений</p>
-                {% endif %}
-            </div>
-        </a>
-        {% endfor %}
+            {% for conversation, last_message in conversations %}
+                <a href="{{ url_for('chat', conversation_id=conversation.id) }}" class="chat-item">
+                    {% if conversation.type == 'direct' %}
+                        {% set other = conversation.user1 if conversation.user1 != current_user else conversation.user2 %}
+                        {% if other.avatar %}
+                            <img src="{{ url_for('static', filename='avatars/' + other.avatar) }}" alt="{{ other.username }} avatar" class="chat-avatar">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='orig.jpg') }}" alt="Default avatar" class="chat-avatar">
+                        {% endif %}
+                        <div class="chat-info">
+                            <div class="chat-name">{{ other.username }}</div>
+                            {% if last_message %}
+                                <div class="chat-last-message">{{ last_message.text[:50] + '...' if last_message.text|length > 50 else last_message.text }}</div>
+                                <div class="chat-time" data-timestamp="{{ last_message.timestamp.timestamp() }}">{{ last_message.timestamp.strftime('%H:%M') }}</div>
+                            {% else %}
+                                <div class="chat-last-message">Нет сообщений</div>
+                                <div class="chat-time"></div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <img src="{{ url_for('static', filename='orig.jpg') }}" alt="Group avatar" class="chat-avatar">
+                        <div class="chat-info">
+                            <div class="chat-name">{{ conversation.name }}</div>
+                            {% if last_message %}
+                                <div class="chat-last-message">{{ last_message.sender.username }}: {{ last_message.text[:40] + '...' if last_message.text|length > 40 else last_message.text }}</div>
+                                <div class="chat-time" data-timestamp="{{ last_message.timestamp.timestamp() }}">{{ last_message.timestamp.strftime('%H:%M') }}</div>
+                            {% else %}
+                                <div class="chat-last-message">Нет сообщений</div>
+                                <div class="chat-time"></div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </a>
+            {% endfor %}
         {% else %}
-        <p>У вас пока нет чатов. <a href="{{ url_for('start_chat') }}">Начните новый чат</a> или <a
-                href="{{ url_for('create_group') }}">создайте группу</a>.</p>
+            <div class="no-chats">
+                <p>У вас пока нет чатов.</p>
+                <p><a href="{{ url_for('start_chat') }}">Начните новый чат</a> или <a href="{{ url_for('create_group') }}">создайте группу</a>.</p>
+            </div>
         {% endif %}
     </div>
-    <div class="sidebar">
-        <a href="{{ url_for('settings') }}">Настройки</a>
-        <a href="{{ url_for('create_group') }}">Создать группу</a>
-        <a href="{{ url_for('start_chat') }}">Начать чат</a>
-        <a href="{{ url_for('logout') }}">Выйти</a>
-    </div>
 </main>
-<footer>
-    <p>chater</p>
-</footer>
 <a href="{{ url_for('start_chat') }}" class="fab">+</a>
+
+<script>
+// Обновляем время для локального часового пояса
+document.addEventListener('DOMContentLoaded', function() {
+    const timeElements = document.querySelectorAll('.chat-time[data-timestamp]');
+    timeElements.forEach(element => {
+        const timestamp = parseFloat(element.getAttribute('data-timestamp'));
+        const date = new Date(timestamp * 1000);
+        const now = new Date();
+        
+        // Если сообщение сегодня, показываем время
+        if (date.toDateString() === now.toDateString()) {
+            element.textContent = date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        }
+        // Если вчера, показываем "Вчера"
+        else {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (date.toDateString() === yesterday.toDateString()) {
+                element.textContent = 'Вчера';
+            }
+            // Иначе показываем дату
+            else {
+                element.textContent = date.toLocaleDateString();
+            }
+        }
+    });
+});
+</script>
 </body>
 </html>

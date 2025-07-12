@@ -1,22 +1,42 @@
 {% extends "base.html" %}
 {% block title %}Создать группу{% endblock %}
 {% block head %}
-    <script src="https://releases.jquery.com/git/jquery-git.min.js" integrity="sha384-CQ5wK5Rkp6STqQ/6F26wYHKejS3pCR7rY6ix9RTrSXV3q/MV+CU55EIHr6S/4IcM" crossorigin="anonymous"></script>
+    <script
+  src="https://code.jquery.com/jquery-3.7.1.js"
+  integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+  crossorigin="anonymous"></script>
 {% endblock %}
 {% block content %}
-    <h1>Создать группу</h1>
-    <div id="create-group">
-        <h2>Новая группа</h2>
-        <form method="POST" action="{{ url_for('create_group') }}">
-            {{ form.hidden_tag() }}
-            <input type="text" name="name" placeholder="Название группы" required>
-            <h3>Выберите участников</h3>
-            {% for user in users %}
-                <label>
-                    <input type="checkbox" name="members" value="{{ user.id }}"> @{{ user.username }}
-                </label><br>
+    <header>
+        <div class="logo">
+            <a href="{{ url_for('chats') }}">chater</a>
+        </div>
+        <div class="menu">
+            <a href="{{ url_for('settings') }}">Настройки</a>
+            <a href="{{ url_for('create_group') }}">Создать группу</a>
+            <a href="{{ url_for('logout') }}">Выход</a>
+        </div>
+    </header>
+    
+    <div class="form-title">Создать группу</div>
+    <form method="POST" action="{{ url_for('create_group') }}">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.name.label }}<br>
+            {{ form.name(size=20) }}
+            {% for error in form.name.errors %}
+                <span style="color: red;">{{ error }}</span><br>
             {% endfor %}
-            <button type="submit">Создать</button>
-        </form>
-    </div>
+        </div>
+        <div>
+            {{ form.members.label }}<br>
+            {{ form.members(size=10) }}
+            {% for error in form.members.errors %}
+                <span style="color: red;">{{ error }}</span><br>
+            {% endfor %}
+        </div>
+        <div>
+            {{ form.submit() }}
+        </div>
+    </form>
 {% endblock %}
